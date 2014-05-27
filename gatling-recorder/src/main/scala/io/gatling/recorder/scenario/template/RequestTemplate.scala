@@ -26,7 +26,7 @@ object RequestTemplate {
 
   def headersBlockName(id: Int) = fast"headers_$id"
 
-  def render(simulationClass: String, request: RequestElement) = {
+  def render(simulationClass: String, request: RequestElement, extractedUri: ExtractedUris) = {
 
       def renderMethod =
         if (BuiltInHttpMethods.contains(request.method)) {
@@ -35,7 +35,12 @@ object RequestTemplate {
           fast"""httpRequest("$request.method", Left($renderUrl))"""
         }
 
-      def renderUrl = protectWithTripleQuotes(request.printedUrl)
+      def usesBaseUrl: Boolean =
+        request.printedUrl != request.uri
+
+      def renderUrl =
+        if (usesBaseUrl) protectWithTripleQuotes(request.printedUrl)
+        else extractedUri.renderUri(request.uri)
 
       def renderHeaders = request.filteredHeadersId
         .map { id =>
